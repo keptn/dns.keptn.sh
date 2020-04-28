@@ -1,12 +1,76 @@
-language: python
+# Copyright 2020 Dynatrace LLC
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
+language: python
 python:
   - "2.7"
+env:
+  global:
+    - IMAGE=keptn/dns.keptn.sh
 
-install:
-  - pip install --quiet mock
-  - pip install --quiet assertpy
-  - pip install --quiet .
+before_install:
+  - export REPO_URL="$(git remote get-url --all origin)"
+  # get some git meta data like branch name, latest tag etc...
+  - GIT_LAST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1) || echo "0.0.0")
+  - GIT_BRANCH_NAME=$(git branch | grep \* | cut -d ' ' -f2)
+  - export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
+  - export BRANCH_SLUG=$(echo $BRANCH | iconv -t ascii//TRANSLIT | sed -r s/[^a-zA-Z0-9]+/-/g | sed -r s/^-+\|-+$//g | tr A-Z a-z)
+  - export GIT_SHA=$(git rev-parse --short HEAD)
+  # Build version string
+  - |
+    if [[ "$BRANCH" == "release-"* ]]; then
+      # extract version from branch name
+      VERSION=${BRANCH#"release-"}
+    else
+      if [[ "$BRANCH" == "$TRAVIS_TAG" ]]; then
+        # use tag as version
+        VERSION="${TRAVIS_TAG}"
+      else
+        # Development Branch - use last tag with branch name
+        VERSION="${GIT_LAST_TAG}-${BRANCH_SLUG}"
+      fi
+    fi
+  - export VERSION
+  - export DATE="$(date +'%Y%m%d')"
+  - export TIME="$(date +'%H%M')"
 
-script:
-  - pytest
+jobs:
+  include:
+    - stage: test
+      install:
+      - pip install --quiet mock
+      - pip install --quiet assertpy
+      - pip install --quiet .
+
+      script:
+        - pytest
+    
+    - stage: docker build
+      services:
+        - docker
+      script:
+        # build and push docker image to dockerhub
+        - ./build.sh "${IMAGE}" "${GIT_SHA}"
+        - docker tag "${IMAGE}:${GIT_SHA}" "${IMAGE}:${VERSION}"
+        - docker tag "${IMAGE}:${GIT_SHA}" "${IMAGE}:${VERSION}-${DATE}"
+        - docker tag "${IMAGE}:${GIT_SHA}" "${IMAGE}:${VERSION}-${DATE}.${TIME}"
+      before_deploy:
+        - docker login -u "$REGISTRY_USER" -p "$REGISTRY_PASSWORD"
+      deploy:
+        provider: script
+        script: docker push "${IMAGE}"
+        on:
+          all_branches: true
+      after_deploy:
+        - echo "The following images have been built (and pushed to dockerhub):"
+        - docker images | grep "${IMAGE}"

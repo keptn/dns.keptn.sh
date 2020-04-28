@@ -1,8 +1,19 @@
-# NIP.IO
+# dns.keptn.sh
 
-[![Build Status](https://travis-ci.org/exentriquesolutions/nip.io.svg?branch=master)](https://travis-ci.org/exentriquesolutions/nip.io)
+[![Build Status](https://travis-ci.org/keptn/dns.keptn.sh.svg?branch=master)](https://travis-ci.org/keptn/dns.keptn.sh)
 
-Dead simple wildcard DNS for any IP Address.
+Please note: This is a customized fork of [exentriquesolutions/nip.io](https://github.com/exentriquesolutions/nip.io) tailored for the needs 
+[Keptn](https://keptn.sh). Use at own risk.
+
+The docker image generated out of this repo is available at [docker.io/keptn/dns.keptn.sh](https://hub.docker.com/r/keptn/dns.keptn.sh).
+
+
+## Build
+
+See [build.sh](build.sh) for building the docker image.
+
+
+# ORIGINAL NIP.IO Documentation
 
 [NIP.IO](http://nip.io) is powered by [PowerDNS](https://powerdns.com) with a simple, 
 custom [PipeBackend](https://doc.powerdns.com/authoritative/backends/pipe.html): 
