@@ -13,6 +13,24 @@ The docker image generated out of this repo is available at [docker.io/keptn/dns
 See [build.sh](build.sh) for building the docker image.
 
 
+## VM Setup
+
+While the setup will work with one VM, we stronlgy recommend using at least two VMs that are in different geographic regions (depending on where your users will be sitting).
+
+The VMs will just need a Docker daemon, Internet access and Port 53 needs to be opened within the firewall.
+
+## DNS Configuration
+
+To use this service, the following configuration needs to be taken on your DNS provider:
+
+1. Create your primary domain (e.g., dns.keptn.sh) with an *A record* pointing to your primary server
+2. Create two sub-domains ns1 and ns2 (e.g., ns1.dns.keptn.sh and ns2.dns.keptn.sh) pointing to the primary and secondary server (if you don't have a secondary, point it to the primary server for now)
+3. Create a *NS record*  for your primary domain (e.g., dns.keptn.sh), pointing to the ns1 and ns2 domains
+
+**Example config:**
+
+![Example DNS Config](dns-config.png "Example DNS Config for dns.keptn.sh")
+
 # ORIGINAL NIP.IO Documentation
 
 [NIP.IO](http://nip.io) is powered by [PowerDNS](https://powerdns.com) with a simple, 
